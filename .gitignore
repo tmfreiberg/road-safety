@@ -1,0 +1,10 @@
+# Ignore the large csv files of collision data:
+*.csv
+
+# Except files of the form saaq_2011.csv to saaq_2022.csv
+!saaq_201[1-9].csv
+!saaq_202[0-2].csv
+
+# Ignore these folders:
+notebooks/.ipynb_checkpoints
+scripts/__pycache__/
