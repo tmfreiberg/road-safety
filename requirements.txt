@@ -1,0 +1,12 @@
+# Custom modules
+pandas
+numpy
+matplotlib
+scikit-learn
+xgboost
+joblib
+ipywidgets
+
+# Additional dependencies
+typing
+pathlib
