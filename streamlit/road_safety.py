@@ -17,11 +17,11 @@ import streamlit as st
 import numpy as np 
 import pandas as pd 
 import joblib
-# import random
 
 import dictionaries
 
-from dictionaries import selection_dictionary, FR_EN, shorthand, selection_dictionary_shorthand, inverse_shorthand, explain 
+from dictionaries import selection_dictionary, shorthand, selection_dictionary_shorthand, inverse_shorthand, selection_dictionary_fr, shorthand_fr, selection_dictionary_shorthand_fr, inverse_shorthand_fr, FR_EN, explain
+
 from io import StringIO
 # Redirect stdout to a StringIO object
 stdout_orig = sys.stdout
@@ -29,9 +29,9 @@ sys.stdout = StringIO()
 
 model = joblib.load(Path("./mtl_3sev_xgb.joblib"))
 
-st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>Road accident severity</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; text-transform: uppercase;'>Road safety | Sécurité routière</h1>", unsafe_allow_html=True)
 
-tab1, tab2 = st.tabs(["Predictions", "Dictionary"])
+tab1, tab2, tab3, tab4 = st.tabs(["Predictions", "Dictionary", "Prédictions", "Dictionnaire"])
 
 with tab1:
     
@@ -91,9 +91,9 @@ with tab2:
     # Dropdown menu for selecting keys
     options = list(FR_EN.values())
     default_index = options.index("SEVERITY") if "SEVERITY" in options else 0
-    selected_key = st.selectbox("", options, index=default_index)
+    selected_key = st.selectbox("", options, index=default_index, key = "dict_en")
     
-    st.markdown("<hr>", unsafe_allow_html=True)
+    st.divider()
     
     # Placeholder for dynamic content
     explanation_placeholder = st.empty()
@@ -114,6 +114,88 @@ with tab2:
         st.text("Severity class 0: Material damage only/Material damage below the reporting threshold.")
         st.text("Severity class 1: Minor.")
         st.text("Severity class 2: Fatal or serious.")
+        
+with tab3:
+       
+    text_to_display_fr = "De nombreuses combinaisons de fonctionnalités sont incompatibles, par ex. la limite de vitesse dans une zone scolaire ne peut pas dépasser 50. Dans de tels cas, notre modèle offrira toujours une prédiction, qui peut ou non être utile à des fins de planification, ou offrira un aperçu de questions hypothétiques."
+    s = f"<p style='font-size:15px;'>{text_to_display_fr}</p>"
+    st.markdown(s, unsafe_allow_html=True)  
+    
+    st.divider()
+
+    # Make predictions and get probabilities
+    predictions_placeholder_fr = st.empty()
+    probabilities_placeholders_fr = [st.empty() for _ in range(3)]  # One placeholder for each class
+
+
+    # Display predictions and probabilities at the top of the page
+    predictions_placeholder_fr.text("Niveau de gravité prévu : ")
+    probabilities_placeholders_fr[0].text(f"Probabilité de niveau de gravité 0 : ")
+    probabilities_placeholders_fr[1].text(f"Probabilité de niveau de gravité 1 : ")
+    probabilities_placeholders_fr[2].text(f"Probabilité de niveau de gravité 2 : ")  
+
+    # Initialize a dictionary to store selected options
+    unencoded_selection_fr = { }
+    selected_options_dict_fr = {}
+
+    num_rows_fr = 3
+
+    col1_fr, col2_fr, col3_fr = st.columns(3)  # Create three columns
+    for idx, (feature_fr, options_fr) in enumerate(selection_dictionary_shorthand_fr.items()):
+        if idx%num_rows_fr == 0:
+            selected_option_fr = col1_fr.selectbox(f"{feature_fr}", list(options_fr.values()), key=f"col1_fr_{idx}")
+        elif idx%num_rows_fr == 1:
+            selected_option_fr = col2_fr.selectbox(f"{feature_fr}", list(options_fr.values()), key=f"col2_fr_{idx}")
+        else:
+            selected_option_fr = col3_fr.selectbox(f"{feature_fr}", list(options_fr.values()), key=f"col3_fr_{idx}")
+
+        # Store the selected option in the dictionary
+        unencoded_selection_fr[feature_fr] = inverse_shorthand_fr[feature_fr][selected_option_fr]
+        selected_options_dict_fr[feature_fr] = selection_dictionary_fr[feature_fr][unencoded_selection_fr[feature_fr]]
+        selected_options_dict = { FR_EN[feature_fr] : selected_options_dict_fr[feature_fr] for feature_fr in selected_options_dict_fr.keys()}
+    # Create a DataFrame from selected options
+    selected_options_df = pd.DataFrame(selected_options_dict, columns=selection_dictionary_shorthand.keys(), index=[0])
+
+    # Make predictions and get probabilities
+    predictions_fr = model.predict(selected_options_df)
+    probabilities_fr = model.predict_proba(selected_options_df)
+
+    # Display predictions and probabilities
+    predictions_placeholder_fr.text(f"Niveau de gravité prévu :  {predictions_fr[0]}")
+
+    # Display probabilities for all classes
+    probabilities_placeholders_fr[0].text(f"Probabilité de niveau de gravité 0 : {100 * probabilities_fr[0,0]:.2f}%")
+    probabilities_placeholders_fr[1].text(f"Probabilité de niveau de gravité 1 : {100 * probabilities_fr[0,1]:.2f}%")
+    probabilities_placeholders_fr[2].text(f"Probabilité de niveau de gravité 2 : {100 * probabilities_fr[0,2]:.2f}%")
+  
+with tab4:
+    
+    # Dropdown menu for selecting keys
+    options_fr = list(FR_EN.keys())
+    default_index_fr = options_fr.index("GRAVITE") if "GRAVITE" in options_fr else 0
+    selected_key_fr = st.selectbox("", options_fr, index=default_index_fr, key="dict_fr")
+    
+    st.divider()
+    
+    # Placeholder for dynamic content
+    explanation_placeholder_fr = st.empty()
+
+    # Call the explain function and capture the output
+    sys.stdout = StringIO()  # Redirect stdout to a StringIO object
+    dictionaries.explain("FR", terms=[selected_key_fr])  # Call explain function
+    generated_text_fr = sys.stdout.getvalue()  # Get the generated text
+
+    # Restore stdout to its original value
+    sys.stdout = stdout_orig
+    
+    # Display the generated text in Streamlit
+    st.text(generated_text_fr)    
+    
+    if selected_key_fr == "GRAVITE":
+        st.text("*NB : pour nos besoins :")
+        st.text("Classe de gravité 0 : Dommages matériels inférieurs au seuil de rapportage/Dommages matériels seulement.")
+        st.text("Classe de gravité 1 : Léger.")
+        st.text("Classe de gravité 2 : Mortel ou grave.")        
     
     
 

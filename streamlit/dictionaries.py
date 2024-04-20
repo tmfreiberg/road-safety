@@ -98,7 +98,290 @@ selection_dictionary = {'MONTH': {1: 1,
  'BICYC': {'N': 0, 'Y': 1},
  'PED': {'N': 0, 'Y': 1}}
 
-# FRENCH TO ENGLISH DICTIONARY: SAAQ SOURCE DATAFRAME COLUMN NAMES
+shorthand = {'YEAR': None,
+ 'ASPECT': {'Straight': 'Straight', 'Curve': 'Curve'},
+ 'PUB_PRIV_RD': {1: 'Public', 2: 'Private'},
+ 'WEATHER': {11: 'Clear',
+  12: 'Overcast',
+  13: 'Fog/haze',
+  14: 'Rain/drizzle',
+  15: 'Downpour',
+  16: 'Strong wind',
+  17: 'Snow/hail',
+  18: 'Blowing snow/snowstorm',
+  19: 'Black ice',
+  99: 'Other'},
+ 'RD_CONFG': {1: 'One-way', 23: 'Two-way', 45: 'Sep by layout', 9: 'Other'},
+ 'LIGHT': {1: 'Clear day', 2: 'Dawn/dusk', 3: 'Lit path', 4: 'Unlit path'},
+ 'ZONE': {1: 'School',
+  2: 'Residential',
+  3: 'Business/commercial',
+  4: 'Industrial',
+  5: 'Rural',
+  6: 'Forest',
+  9: 'Other'},
+ 'RD_COND': {11: 'Dry',
+  12: 'Wet',
+  13: 'Water acc',
+  14: 'Sand/gravel',
+  15: 'Slush/sleet',
+  16: 'Snowy',
+  17: 'Hard snow',
+  18: 'Frozen',
+  19: 'Muddy',
+  20: 'Oily',
+  99: 'Other'},
+ 'ACCDN_TYPE': {'vehicle': 'veh',
+  'pedestrian': 'ped',
+  'cyclist': 'cyc',
+  'animal': 'anim',
+  'fixed object': 'fxd obj',
+  'no collision': 'no coll',
+  'other': 'oth'},
+ 'LONG_LOC': {12: "Int'n/roundabout",
+  33: "Near int'n/roundabout",
+  34: "Btwn int'ns",
+  40: 'Shop centre',
+  69: 'Bridge etc.',
+  99: 'Other'},
+ 'RDWX': {'Y': 'Y', 'N': 'N'},
+ 'SEVERITY': {'Material damage below the reporting threshold': 'Mat < 2000',
+  'Material damage only': 'Mat',
+  'Minor': 'Minor',
+  'Fatal or serious': 'Fatal/serious'},
+ 'HOUR': {'00:00:00-03:59:00': '00:00-04:00',
+  '04:00:00-07:59:00': '04:00-08:00',
+  '08:00:00-11:59:00': '08:00-12:00',
+  '12:00:00-15:59:00': '12:00-16:00',
+  '16:00:00-19:59:00': '16:00-20:00',
+  '20:00:00-23:59:00': '20:00-24:00'},
+ 'LT_TRK': {'Y': 'Y', 'N': 'N'},
+ 'MTRCYC': {'Y': 'Y', 'N': 'N'},
+ 'PED': {'Y': 'Y', 'N': 'N'},
+ 'HVY_VEH': {'Y': 'Y', 'N': 'N'},
+ 'BICYC': {'Y': 'Y', 'N': 'N'},
+ 'WKDY_WKND': {'WKDY': 'weekday', 'WKND': 'weekend'},
+ 'MONTH': {1: 'Jan',
+  2: 'Feb',
+  3: 'Mar',
+  4: 'Apr',
+  5: 'May',
+  6: 'Jun',
+  7: 'Jul',
+  8: 'Aug',
+  9: 'Sep',
+  10: 'Oct',
+  11: 'Nov',
+  12: 'Dec'},
+ 'NUM_VEH': {1: 1, 2: 2, 9: '3+'},
+ 'NUM_VICTIMS': {0: 0, 1: 1, 2: 2, 9: '3+'},
+ 'ID': None,
+ 'REGION': {'Montréal (06)': 'Montréal',
+  'Laval (13)': 'Laval',
+  'Côte-Nord (09)': 'Côte-Nord',
+  'Nord-du-Québec (10)': 'Nord-du-Québec',
+  'Saguenay/-Lac-Saint-Jean (02)': 'Saguenay/Lac-Saint-Jean',
+  'Outaouais (07)': 'Outaouais',
+  'Laurentides (15)': 'Laurentides',
+  'Montérégie (16)': 'Montérégie',
+  'Capitale-Nationale (03)': 'Capitale-Nationale',
+  'Estrie (05)': 'Estrie',
+  'Mauricie (04)': 'Mauricie',
+  'Gaspésie/-Îles-de-la-Madeleine (11)': 'Gaspésie/Îles-de-la-Madeleine',
+  'Bas-Saint-Laurent (01)': 'Bas-Saint-Laurent',
+  'Centre-du-Québec (17)': 'Centre-du-Québec',
+  'Chaudière-Appalaches (12)': 'Chaudière-Appalaches',
+  'Lanaudière (14)': 'Lanaudière',
+  'Abitibi-Témiscamingue (08)': 'Abitibi-Témiscamingue',
+  '': ''},
+ 'SPD_LIM': {'<50': '<50', 50: 50, 60: 60, 70: 70, 80: 80, 90: 90, 100: 100},
+ 'TNRY_SEV': {0: 'Mat', 1: 'Minor', 2: 'Fatal/serious'}}
+
+selection_dictionary_shorthand = { feature : shorthand[feature] for feature, dictionary in selection_dictionary.items() }
+
+inverse_shorthand = {
+    variable: {value: key for key, value in shorthand[variable].items()}
+    for variable in shorthand.keys()
+    if shorthand[variable] is not None
+}
+
+selection_dictionary_fr = {'MS_ACCDN': {1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+  6: 6,
+  7: 7,
+  8: 8,
+  9: 9,
+  10: 10,
+  11: 11,
+  12: 12},
+ 'HR_ACCDN': {'00:00:00-03:59:00': 0,
+  '04:00:00-07:59:00': 1,
+  '08:00:00-11:59:00': 2,
+  '12:00:00-15:59:00': 3,
+  '16:00:00-19:59:00': 4,
+  '20:00:00-23:59:00': 5},
+ 'JR_SEMN_ACCDN': {'SEM': 0, 'FDS': 1},
+ 'NB_VEH_IMPLIQUES_ACCDN': {1: 0, 2: 1, 9: 2},
+ 'VITESSE_AUTOR': {'<50': 0, 50: 5, 60: 6, 70: 7, 80: 8, 90: 9, 100: 10},
+ 'CD_GENRE_ACCDN': {'véhicule': 0,
+  'piéton': 1,
+  'cycliste': 2,
+  'animal': 3,
+  'objet fixe': 4,
+  'sans collision': 5,
+  'autre': 6},
+ 'CD_ETAT_SURFC': {11: 0,
+  12: 1,
+  13: 2,
+  14: 3,
+  15: 4,
+  16: 5,
+  17: 6,
+  18: 7,
+  19: 8,
+  20: 9,
+  99: 10},
+ 'CD_ECLRM': {1: 3, 2: 2, 3: 1, 4: 0},
+ 'CD_ENVRN_ACCDN': {1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 9: 6},
+ 'CD_CATEG_ROUTE': {1: 0, 2: 1},
+ 'CD_ASPCT_ROUTE': {'Droit': 0, 'Courbe': 1},
+ 'CD_LOCLN_ACCDN': {12: 0, 33: 1, 34: 2, 40: 3, 69: 4, 99: 5},
+ 'CD_CONFG_ROUTE': {1: 0, 23: 1, 45: 2, 9: 3},
+ 'CD_ZON_TRAVX_ROUTR': {'N': 0, 'O': 1},
+ 'CD_COND_METEO': {11: 0,
+  12: 1,
+  13: 2,
+  14: 3,
+  15: 4,
+  16: 5,
+  17: 6,
+  18: 7,
+  19: 8,
+  99: 9},
+ 'IND_AUTO_CAMION_LEGER': {'N': 0, 'O': 1},
+ 'IND_VEH_LOURD': {'N': 0, 'O': 1},
+ 'IND_MOTO_CYCLO': {'N': 0, 'O': 1},
+ 'IND_VELO': {'N': 0, 'O': 1},
+ 'IND_PIETON': {'N': 0, 'O': 1}}
+
+shorthand_fr = {'CD_ASPCT_ROUTE': {'Droit': 'Droit', 'Courbe': 'Courbe'},
+ 'CD_CATEG_ROUTE': {1: 'Chemin public', 2: 'Hors chemin public'},
+ 'CD_COND_METEO': {11: 'Clair',
+  12: 'Couvert (nuageux/sombre)',
+  13: 'Brouillard/brume',
+  14: 'Pluie/bruine',
+  15: 'Averse (pluie forte)',
+  16: 'Vent fort',
+  17: 'Neige/grêle',
+  18: 'Poudrerie/tempête',
+  19: 'Verglas',
+  99: 'Autre'},
+ 'CD_CONFG_ROUTE': {1: 'Sens unique',
+  23: 'Deux sens',
+  45: 'Séparée par aménagement',
+  9: 'Autre'},
+ 'CD_ECLRM': {1: 'Jour et clarté', 2: 'Jour et demi-obscurité', 3: 'Nuit et chemin éclairé', 4: 'Nuit et chemin non éclairé'},
+ 'CD_ENVRN_ACCDN': {1: 'Scolaire',
+  2: 'Résidentiel',
+  3: 'Affaires/commercial',
+  4: 'Industriel',
+  5: 'Rural',
+  6: 'Forestier',
+  9: 'Autre'},
+ 'CD_ETAT_SURFC': {11: 'Sèche',
+  12: 'Mouillée',
+  13: 'Acc. d\'eau',
+  14: 'Sable/gravier',
+  15: 'Gadoue/neige fondante',
+  16: 'Enneigée',
+  17: 'Neige durcie',
+  18: 'Glacée',
+  19: 'Boueuse',
+  20: 'Huileuse',
+  99: 'Autre'},
+ 'CD_GENRE_ACCDN': {"véhicule": "véhicule",
+        "piéton": "piéton",
+        "cycliste": "cycliste",
+        "animal": "animal",
+        "objet fixe": "objet fixe",
+        "sans collision": "sans collision",
+        "autre": "autre",},
+ 'CD_LOCLN_ACCDN': {12: "En intersection",
+  33: "Près d'une intersection",
+  34: "Entre intersections",
+  40: 'Centre commercial',
+  69: 'Pont etc.',
+  99: 'autre'},
+ 'CD_ZON_TRAVX_ROUTR': {'O': 'O', 'N': 'N'},
+ 'GRAVITE': {'Dommages matériels inférieurs au seuil de rapportage': 'Mat < 2000',
+  'Dommages matériels seulement': 'Mat',
+  'Léger': 'Léger',
+  'Mortel ou grave': 'Mortel/grave'},
+ 'HR_ACCDN': {'00:00:00-03:59:00': '00h00-04h00',
+  '04:00:00-07:59:00': '04h00-08h00',
+  '08:00:00-11:59:00': '08h00-12h00',
+  '12:00:00-15:59:00': '12h00-16h00',
+  '16:00:00-19:59:00': '16h00-20h00',
+  '20:00:00-23:59:00': '20h00-24h00'},
+ 'IND_AUTO_CAMION_LEGER': {'O': 'O', 'N': 'N'},
+ 'IND_MOTO_CYCLO': {'O': 'O', 'N': 'N'},
+ 'IND_PIETON': {'O': 'O', 'N': 'N'},
+ 'IND_VEH_LOURD': {'O': 'O', 'N': 'N'},
+ 'IND_VELO': {'O': 'O', 'N': 'N'},
+ 'JR_SEMN_ACCDN': {'SEM': 'SEM', 'FDS': 'FDS'},
+ 'MS_ACCDN': {1: 'jan',
+  2: 'fév',
+  3: 'mars',
+  4: 'avr',
+  5: 'mai',
+  6: 'juin',
+  7: 'juil',
+  8: 'août',
+  9: 'sept',
+  10: 'oct',
+  11: 'nov',
+  12: 'déc'},
+ 'NB_VEH_IMPLIQUES_ACCDN': {1: 1, 2: 2, 9: '3+'},
+ 'NB_VICTIMES_TOTAL': {0: 0, 1: 1, 2: 2, 9: '3+'},
+ 'NO_SEQ_COLL': None,
+ 'REG_ADM': {'Montréal (06)': 'Montréal',
+  'Laval (13)': 'Laval',
+  'Côte-Nord (09)': 'Côte-Nord',
+  'Nord-du-Québec (10)': 'Nord-du-Québec',
+  'Saguenay/-Lac-Saint-Jean (02)': 'Saguenay/Lac-Saint-Jean',
+  'Outaouais (07)': 'Outaouais',
+  'Laurentides (15)': 'Laurentides',
+  'Montérégie (16)': 'Montérégie',
+  'Capitale-Nationale (03)': 'Capitale-Nationale',
+  'Estrie (05)': 'Estrie',
+  'Mauricie (04)': 'Mauricie',
+  'Gaspésie/-Îles-de-la-Madeleine (11)': 'Gaspésie/Îles-de-la-Madeleine',
+  'Bas-Saint-Laurent (01)': 'Bas-Saint-Laurent',
+  'Centre-du-Québec (17)': 'Centre-du-Québec',
+  'Chaudière-Appalaches (12)': 'Chaudière-Appalaches',
+  'Lanaudière (14)': 'Lanaudière',
+  'Abitibi-Témiscamingue (08)': 'Abitibi-Témiscamingue',
+  '': ''},
+ 'VITESSE_AUTOR': {'<50': '<50',
+  50: 50,
+  60: 60,
+  70: 70,
+  80: 80,
+  90: 90,
+  100: 100}}
+
+selection_dictionary_shorthand_fr = { feature : shorthand_fr[feature] for feature, dictionary in selection_dictionary_fr.items() }
+
+inverse_shorthand_fr = {
+    variable: {value: key for key, value in shorthand_fr[variable].items()}
+    for variable in shorthand_fr.keys()
+    if shorthand_fr[variable] is not None
+}
+
+# # FRENCH TO ENGLISH DICTIONARY: SAAQ SOURCE DATAFRAME COLUMN NAMES
 
 FR_EN = {
     "AN": "YEAR",
@@ -126,44 +409,6 @@ FR_EN = {
     "NO_SEQ_COLL": "ID",
     "REG_ADM": "REGION",
     "VITESSE_AUTOR": "SPD_LIM",
-}
-
-# And the English-French dictionary
-
-EN_FR = {en: fr for (fr, en) in FR_EN.items()}
-
-# For translating the French column values to English:
-
-FR_EN_map_default = {
-    "CD_ASPCT_ROUTE": {"Droit": "Straight", "Courbe": "Curve"},
-    "CD_GENRE_ACCDN": {
-        "véhicule": "vehicle",
-        "piéton": "pedestrian",
-        "cycliste": "cyclist",
-        "objet fixe": "fixed object",
-        "sans collision": "no collision",
-        "autre": "other",
-    },
-    "CD_ZON_TRAVX_ROUTR": {"O": "Y"},
-    "GRAVITE": {
-        "Dommages matériels seulement": "Material damage only",
-        "Dommages matériels inférieurs au seuil de rapportage": "Material damage below the reporting threshold",
-        "Léger": "Minor",
-        "Mortel ou grave": "Fatal or serious",
-    },
-    "IND_AUTO_CAMION_LEGER": {"O": "Y", "N": "N"},
-    "IND_MOTO_CYCLO": {"O": "Y", "N": "N"},
-    "IND_PIETON": {"O": "Y", "N": "N"},
-    "IND_VEH_LOURD": {"O": "Y", "N": "N"},
-    "IND_VELO": {"O": "Y", "N": "N"},
-    "JR_SEMN_ACCDN": {"SEM": "WKDY", "FDS": "WKND"},
-}
-
-# And the English-French translation:
-
-EN_FR_map_default = {
-    FR_EN[key]: {en: fr for (fr, en) in FR_EN_map_default[key].items()}
-    for key in FR_EN_map_default.keys()
 }
 
 # For each column name in the French SAAQ source dataframe, we put all possible values in a dictionary (French keys, English values):
@@ -267,162 +512,6 @@ values = {
         100: 100,
         "": "",
     },
-}
-
-# And the version with English keys and French values:
-values_en = {
-    FR_EN[key]: {en: fr for (fr, en) in values[key].items()} for key in values.keys()
-}
-
-# Define mappings for original SAAQ codes/values to something shorter and/or more human-readble (in some cases).
-shorthand = dict.fromkeys(FR_EN.values())
-shorthand["REGION"] = {
-    "Montréal (06)": "Montréal",
-    "Laval (13)": "Laval",
-    "Côte-Nord (09)": "Côte-Nord",
-    "Nord-du-Québec (10)": "Nord-du-Québec",
-    "Saguenay/-Lac-Saint-Jean (02)": "Saguenay/Lac-Saint-Jean",
-    "Outaouais (07)": "Outaouais",
-    "Laurentides (15)": "Laurentides",
-    "Montérégie (16)": "Montérégie",
-    "Capitale-Nationale (03)": "Capitale-Nationale",
-    "Estrie (05)": "Estrie",
-    "Mauricie (04)": "Mauricie",
-    "Gaspésie/-Îles-de-la-Madeleine (11)": "Gaspésie/Îles-de-la-Madeleine",
-    "Bas-Saint-Laurent (01)": "Bas-Saint-Laurent",
-    "Centre-du-Québec (17)": "Centre-du-Québec",
-    "Chaudière-Appalaches (12)": "Chaudière-Appalaches",
-    "Lanaudière (14)": "Lanaudière",
-    "Abitibi-Témiscamingue (08)": "Abitibi-Témiscamingue",
-    "": "",
-}
-shorthand["NUM_VEH"] = {1: 1, 2: 2, 9: "3+"}
-shorthand["NUM_VICTIMS"] = {0: 0, 1: 1, 2: 2, 9: "3+"}
-shorthand["HOUR"] = {
-    "00:00:00-03:59:00": "00:00-04:00",
-    "04:00:00-07:59:00": "04:00-08:00",
-    "08:00:00-11:59:00": "08:00-12:00",
-    "12:00:00-15:59:00": "12:00-16:00",
-    "16:00:00-19:59:00": "16:00-20:00",
-    "20:00:00-23:59:00": "20:00-24:00",
-}
-shorthand["SEVERITY"] = {
-    "Material damage below the reporting threshold": "Mat < 2000",
-    "Material damage only": "Mat",
-    "Minor": "Minor",
-    "Fatal or serious": "Fatal/serious",
-}
-shorthand["TNRY_SEV"] = { 0 : "Mat", 1: "Minor", 2: "Fatal/serious"}
-shorthand["MONTH"] = {
-    1: "Jan",
-    2: "Feb",
-    3: "Mar",
-    4: "Apr",
-    5: "May",
-    6: "Jun",
-    7: "Jul",
-    8: "Aug",
-    9: "Sep",
-    10: "Oct",
-    11: "Nov",
-    12: "Dec",
-}
-
-shorthand["ACCDN_TYPE"] = {
-    "vehicle": "veh",
-    "pedestrian": "ped",
-    "cyclist": "cyc",
-    "animal": "anim",
-    "fixed object": "fxd obj",
-    "no collision": "no coll",
-    "other": "oth",
-}
-
-shorthand["RD_COND"] = {
-    11: "Dry",
-    12: "Wet",
-    13: "Water acc",
-    14: "Sand/gravel",
-    15: "Slush/sleet",
-    16: "Snowy",
-    17: "Hard snow",
-    18: "Frozen",
-    19: "Muddy",
-    20: "Oily",
-    99: "Other",
-}
-shorthand["LIGHT"] = {
-    1: "Clear day",
-    2: "Dawn/dusk",
-    3: "Lit path",
-    4: "Unlit path",
-}
-shorthand["ZONE"] = {
-    1: "School",
-    2: "Residential",
-    3: "Business/commercial",
-    4: "Industrial",
-    5: "Rural",
-    6: "Forest",
-    9: "Other",
-}
-shorthand["PUB_PRIV_RD"] = {
-    1: "Public",
-    2: "Private",
-}
-shorthand["ASPECT"] = {
-    "Straight": "Straight",
-    "Curve": "Curve",
-}
-shorthand["LONG_LOC"] = {
-    12: "Int'n/roundabout",
-    33: "Near int'n/roundabout",
-    34: "Btwn int'ns",
-    40: "Shop centre",
-    69: "Bridge etc.",
-    99: "Other",
-}
-shorthand["RD_CONFG"] = {
-    1: "One-way",
-    23: "Two-way",
-    45: "Sep by layout",
-    9: "Other",
-}
-shorthand["WEATHER"] = {
-    11: "Clear",
-    12: "Overcast",
-    13: "Fog/haze",
-    14: "Rain/drizzle",
-    15: "Downpour",
-    16: "Strong wind",
-    17: "Snow/hail",
-    18: "Blowing snow/snowstorm",
-    19: "Black ice",
-    99: "Other",
-}
-
-shorthand["WKDY_WKND"] = { "WKDY" : "weekday", "WKND" : "weekend" }
-shorthand["SPD_LIM"] = {
-        "<50": "<50",
-        50: 50,
-        60: 60,
-        70: 70,
-        80: 80,
-        90: 90,
-        100: 100,}
-shorthand["RDWX"] = { "Y" : "Y", "N" : "N" }
-shorthand["LT_TRK"] = { "Y" : "Y", "N" : "N" }
-shorthand["HVY_VEH"] = { "Y" : "Y", "N" : "N" }
-shorthand["PED"] = { "Y" : "Y", "N" : "N" }
-shorthand["BICYC"] = { "Y" : "Y", "N" : "N" }
-shorthand["MTRCYC"] = { "Y" : "Y", "N" : "N" }
-
-selection_dictionary_shorthand = { feature : shorthand[feature] for feature, dictionary in selection_dictionary.items() }
-
-inverse_shorthand = {
-    variable: {value: key for key, value in shorthand[variable].items()}
-    for variable in shorthand.keys()
-    if shorthand[variable] is not None
 }
 
 # EXPLANATION OF SAAQ SOURCE DATAFRAME CODES
