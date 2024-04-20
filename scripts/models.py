@@ -322,8 +322,8 @@ class model:
             print(
                 "Metrics (excluding confusion matrices) also contained in dataframe self.eval_df"
             )
-            self.eval_df = evaluation_df(self.eval) # !!! previously: self.eval
-            self.triv_eval_df = evaluation_df(self.triv_eval) # !!! previously: self.triv_eval
+            self.eval_df = evaluation_df(self.eval) 
+            self.triv_eval_df = evaluation_df(self.triv_eval) 
 
             # DISPLAY EVALUATION METRICS
             print(
@@ -337,9 +337,9 @@ class model:
 
             # DISPLAY CONFUSION MATRICES
             if widgets is None:
-                display_confusion_matrices(self.eval) # !!! # !!! previously: self..., self.eval
+                display_confusion_matrices(self.eval) 
             else:
-                confusion_matrix_widget(self.eval) # !!! # !!! previously: self..., self.eval
+                confusion_matrix_widget(self.eval) 
 
             # MERGE AND DISPLAY FEATURE IMPORTANCES
             if self.feature_importances is not None:
@@ -904,104 +904,6 @@ class model:
             )
         return data
 
-#     def evaluation_df(self, data: dict) -> pd.DataFrame:
-#         data_copy = data.copy()
-#         data_copy.pop("confusion", None)
-#         eval_df = pd.DataFrame(data_copy)
-#         if len(eval_df) > 1:
-#             eval_df.loc["mean"] = eval_df.mean()
-#         return eval_df
-
-#     def display_confusion_matrices(self, which_model: dict) -> None:
-#         if which_model["confusion"] is None:
-#             return
-#         dataframes_lgp = {
-#             i: d["label_given_prediction"]
-#             for i, d in enumerate(which_model["confusion"])
-#         }
-
-#         dataframes_pgl = {
-#             i: d["prediction_given_label"]
-#             for i, d in enumerate(which_model["confusion"])
-#         }
-
-#         print(
-#             "\n" + "=" * 41 + "\nProb(label | prediction = column heading)\n" + "=" * 41
-#         )
-#         for i in dataframes_lgp.keys():
-#             display(i, dataframes_lgp[i])
-
-#         print("\n" + "=" * 35 + "\nProb(prediction | label = row name)\n" + "=" * 35)
-#         for i in dataframes_pgl.keys():
-#             display(i, dataframes_pgl[i])
-
-#     def confusion_matrix_widget(self, which_model: dict) -> None:
-#         if which_model["confusion"] is None:
-#             return
-#         dataframes_lgp = {
-#             i: d["label_given_prediction"]
-#             for i, d in enumerate(which_model["confusion"])
-#         }
-
-#         # Dropdown widget to select DataFrame
-#         dropdown_lgp = widgets.Dropdown(options=list(dataframes_lgp.keys()))
-
-#         # Output widget to display the selected DataFrame
-#         output_lgp = widgets.Output()
-
-#         # Function to update displayed DataFrame based on dropdown value
-#         def update_dataframe_lgp(change):
-#             output_lgp.clear_output()  # Clear the output before displaying the selected DataFrame
-#             selected_df = dataframes_lgp[change.new]
-#             with output_lgp:
-#                 display(selected_df)
-
-#         # Register the function to update the displayed DataFrame when dropdown value changes
-#         dropdown_lgp.observe(update_dataframe_lgp, names="value")
-
-#         # Initial display of the first DataFrame
-#         initial_df_lgp = dataframes_lgp[dropdown_lgp.value]
-#         with output_lgp:
-#             display(initial_df_lgp)
-
-#         # Display the dropdown widget and output widget
-#         print(
-#             "\n" + "=" * 41 + "\nProb(label | prediction = column heading)\n" + "=" * 41
-#         )
-#         display(dropdown_lgp)
-#         display(output_lgp)
-
-#         dataframes_pgl = {
-#             i: d["prediction_given_label"]
-#             for i, d in enumerate(which_model["confusion"])
-#         }
-
-#         # Dropdown widget to select DataFrame
-#         dropdown_pgl = widgets.Dropdown(options=list(dataframes_pgl.keys()))
-
-#         # Output widget to display the selected DataFrame
-#         output_pgl = widgets.Output()
-
-#         # Function to update displayed DataFrame based on dropdown value
-#         def update_dataframe_pgl(change):
-#             output_pgl.clear_output()  # Clear the output before displaying the selected DataFrame
-#             selected_df = dataframes_pgl[change.new]
-#             with output_pgl:
-#                 display(selected_df)
-
-#         # Register the function to update the displayed DataFrame when dropdown value changes
-#         dropdown_pgl.observe(update_dataframe_pgl, names="value")
-
-#         # Initial display of the first DataFrame
-#         initial_df_pgl = dataframes_pgl[dropdown_pgl.value]
-#         with output_pgl:
-#             display(initial_df_pgl)
-
-#         # Display the dropdown widget and output widget
-#         print("\n" + "=" * 35 + "\nProb(prediction | label = row name)\n" + "=" * 35)
-#         display(dropdown_pgl)
-#         display(output_pgl)
-
     def feature_importance(self) -> dict:
         # Access the classifier from the pipeline
         classifier = self.pipeline.named_steps["classifier"]
@@ -1055,23 +957,6 @@ class model:
             feature: sum(values) for feature, values in feature_importances_dict.items()
         }
         return combined_feature_importances, feature_importances_dict
-
-#     def merge_feature_importances(self) -> pd.DataFrame:
-#         dfs = [
-#             pd.DataFrame(self.feature_importances[i], index=[i])
-#             for i in self.preds.keys()
-#         ]
-#         merged_df = pd.concat(dfs, ignore_index=True).T
-#         # Sort by absolute value of values in column 0.
-#         # Though sorted by absolute value, values are not changed, i.e. signs are maintained.
-#         # For XGBClassifier/RandomForesstClassifier/DecisionTreeClassifier, values will be non-negative anyway.
-#         merged_df = merged_df.reindex(
-#             merged_df[0].abs().sort_values(ascending=False).index
-#         )
-#         print(
-#             "\nFeature importances corresponding to validation set(s) contained in self.feature_importances and self.feature_importances_df.\n"
-#         )
-#         return merged_df
 
     def plot_feature_importance(self, animate: bool = False, fold: int = None) -> None:
         if (
@@ -1325,8 +1210,11 @@ def custom_xgb_grid_search(data: Type[process] = None,
     output['evaluation'] = copy.deepcopy(instance.eval)
     output['feature_importance'] = instance.feature_importances
     for cm in output['evaluation']["confusion"]:
-        cm['label_given_prediction'] = cm['label_given_prediction'].to_dict(orient='index')
-        cm['prediction_given_label'] = cm['prediction_given_label'].to_dict(orient='index')
+        cm['label_given_prediction'] = cm['label_given_prediction'].to_dict(orient='list') 
+        # orient='index' is the wrong orientation; 
+        # orient='series' will cause errors to be thrown when we do json.dump... something about series not being serializable.
+        # just .to_dict() also will not work...
+        cm['prediction_given_label'] = cm['prediction_given_label'].to_dict(orient='list')
 
     return output   
 
