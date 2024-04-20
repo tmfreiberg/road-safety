@@ -35,7 +35,7 @@ tab1, tab2 = st.tabs(["Predictions", "Dictionary"])
 
 with tab1:
     
-    text_to_display = "Many feature combinations are incompatible, e.g. the speed limit in a school zone cannot exceed 50. In such cases, our model will still offer a prediction, but it will be meaningless."
+    text_to_display = "Many feature combinations are incompatible, e.g. the speed limit in a school zone cannot exceed 50. In such cases, our model will still offer a prediction, which may or may not be useful for planning purposes, or offer insight on hypothetical questions."
     s = f"<p style='font-size:15px;'>{text_to_display}</p>"
     st.markdown(s, unsafe_allow_html=True)  
     
