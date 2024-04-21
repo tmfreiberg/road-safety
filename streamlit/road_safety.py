@@ -36,7 +36,7 @@ def english_content():
     
     st.title("Road safety")
 
-    tab1, tab2  = st.tabs(["Predictions", "Dictionary"])
+    tab1, tab2, tab3  = st.tabs(["Predictions", "Dictionary", "Citation"])
 
     with tab1:
 
@@ -119,16 +119,26 @@ def english_content():
             st.text("Severity class 0: Material damage only/Material damage below the reporting threshold.")
             st.text("Severity class 1: Minor.")
             st.text("Severity class 2: Fatal or serious.")
+            
+    with tab3:
+        
+        st.write("QUEBEC AUTOMOBILE INSURANCE SOCIETY (SAAQ). Accident reports, [Dataset], in Data Quebec, 2017, updated December 18, 2023. [https://www.donneesquebec.ca/recherche/dataset/rapports-d-accident](https://www.donneesquebec.ca/recherche/dataset/rapports-d-accident) (accessed March 13, 2024).")
+                 
+        st.write("_Data from accident reports completed by police officers, including the time, severity of the accident as well as the type of vehicles involved._")
+        
+        st.divider()
+        ''' [![Repo](https://img.shields.io/badge/GitHub-Repo-blue?logo=github)](https://github.com/tmfreiberg/road-safety.git) ''' 
+        st.markdown("<br>",unsafe_allow_html=True)
              
 def french_content():      
              
     st.title("Sécurité routière")
     
-    tab3, tab4 = st.tabs(["Prédictions", "Dictionnaire"])
+    tab4, tab5, tab6 = st.tabs(["Prédictions", "Dictionnaire", "Citation"])
         
-    with tab3:
+    with tab4:
 
-        text_to_display_fr = "De nombreuses combinaisons de fonctionnalités sont incompatibles, par ex. la limite de vitesse dans une zone scolaire ne peut pas dépasser 50. Dans de tels cas, notre modèle offrira toujours une prédiction, qui peut ou non être utile à des fins de planification, ou offrira un aperçu de questions hypothétiques."
+        text_to_display_fr = "De nombreuses combinaisons de fonctionnalités sont incompatibles, par exemple, la limite de vitesse dans une zone scolaire ne peut pas dépasser 50km/hre. Dans de tels cas, notre modèle offrira toujours une prédiction, qui peut ou non être utile à des fins de planification, ou offrira un aperçu de questions hypothétiques."
         s = f"<p style='font-size:15px;'>{text_to_display_fr}</p>"
         st.markdown(s, unsafe_allow_html=True)  
 
@@ -140,10 +150,10 @@ def french_content():
 
 
         # Display predictions and probabilities at the top of the page
-        predictions_placeholder_fr.text("Niveau de gravité prévu : ")
-        probabilities_placeholders_fr[0].text(f"Probabilité de niveau de gravité 0 : ")
-        probabilities_placeholders_fr[1].text(f"Probabilité de niveau de gravité 1 : ")
-        probabilities_placeholders_fr[2].text(f"Probabilité de niveau de gravité 2 : ")  
+        predictions_placeholder_fr.text("Niveau de gravité prédit : ")
+        probabilities_placeholders_fr[0].text(f"Probabilité du niveau de gravité 0 : ")
+        probabilities_placeholders_fr[1].text(f"Probabilité du niveau de gravité 1 : ")
+        probabilities_placeholders_fr[2].text(f"Probabilité du niveau de gravité 2 : ")  
 
         # Initialize a dictionary to store selected options
         unencoded_selection_fr = { }
@@ -172,14 +182,14 @@ def french_content():
         probabilities_fr = model.predict_proba(selected_options_df)
 
         # Display predictions and probabilities
-        predictions_placeholder_fr.text(f"Niveau de gravité prévu :  {predictions_fr[0]}")
+        predictions_placeholder_fr.text(f"Niveau de gravité prédit :  {predictions_fr[0]}")
 
         # Display probabilities for all classes
-        probabilities_placeholders_fr[0].text(f"Probabilité de niveau de gravité 0 : {100 * probabilities_fr[0,0]:.2f}%")
-        probabilities_placeholders_fr[1].text(f"Probabilité de niveau de gravité 1 : {100 * probabilities_fr[0,1]:.2f}%")
-        probabilities_placeholders_fr[2].text(f"Probabilité de niveau de gravité 2 : {100 * probabilities_fr[0,2]:.2f}%")
+        probabilities_placeholders_fr[0].text(f"Probabilité du niveau de gravité 0 : {100 * probabilities_fr[0,0]:.2f}%")
+        probabilities_placeholders_fr[1].text(f"Probabilité du niveau de gravité 1 : {100 * probabilities_fr[0,1]:.2f}%")
+        probabilities_placeholders_fr[2].text(f"Probabilité du niveau de gravité 2 : {100 * probabilities_fr[0,2]:.2f}%")
 
-    with tab4:
+    with tab5:
 
         # Dropdown menu for selecting keys
         options_fr = list(FR_EN.keys())
@@ -206,8 +216,18 @@ def french_content():
             st.text("*NB : pour nos besoins :")
             st.text("Classe de gravité 0 : Dommages matériels inférieurs au seuil de rapportage/Dommages matériels seulement.")
             st.text("Classe de gravité 1 : Léger.")
-            st.text("Classe de gravité 2 : Mortel ou grave.")        
-    
+            st.text("Classe de gravité 2 : Mortel ou grave.")
+            
+    with tab6:
+        
+        st.write("SOCIÉTÉ DE L'ASSURANCE AUTOMOBILE DU QUÉBEC (SAAQ). Rapports d'accident, [Jeu de données], dans Données Québec, 2017, mis à jour le 18 decembre 2023. [https://www.donneesquebec.ca/recherche/dataset/rapports-d-accident](https://www.donneesquebec.ca/recherche/dataset/rapports-d-accident).")
+                 
+        st.write("_Données issues des rapports d’accident remplis par les policiers, incluant notamment le moment, la gravité de l’accident de même que le type des véhicules impliqués._")
+        
+        st.divider()       
+        
+        ''' [![Repo](https://img.shields.io/badge/GitHub-Repo-blue?logo=github)](https://github.com/tmfreiberg/road-safety.git) ''' 
+        st.markdown("<br>",unsafe_allow_html=True)
 
 if st.button("English/Français"):
     if st.session_state.selected_language == "English":
