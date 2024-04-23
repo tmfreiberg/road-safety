@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import Type, Union, Optional, Tuple, Callable
+import copy
 from sklearn.model_selection import StratifiedKFold
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder
@@ -25,12 +26,12 @@ from sklearn.model_selection import GridSearchCV
 from joblib import dump
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from evaluation import custom_confusion
+from evaluation import custom_confusion, weighted_average_f, confusion_matrix_with_weighted_fbeta
 from processing import process
 from variables import class_codes, inverse_class_codes
 from pathlib import Path
 
-from utils import display, clear_output
+from utils import display, clear_output, print_header
 
 try:
     # Check if in a Jupyter Notebook
@@ -203,6 +204,8 @@ class model:
         param_grid: dict = None,
         filename_stem: str = None,
         model_dir: Path = None,
+        beta: Union[float, None] = None,
+        weights: Union[np.ndarray,None] = None,
     ) -> None:
 
         self.data = data
@@ -215,20 +218,22 @@ class model:
         self.filename_stem = filename_stem
         self.model_dir = model_dir
         self.preprocessor = None
+        self.beta = beta
+        self.weights = weights
 
         # New attributes
-        self.class_codes = class_codes.copy()
-        self.inverse_class_codes = inverse_class_codes.copy()
+        self.class_codes = copy.deepcopy(class_codes)
+        self.inverse_class_codes = copy.deepcopy(inverse_class_codes)
 
         # SEPARATE FEATURES X FROM TARGETS y (X_train, y_train, X_test, y_test)
-        print("\nSeparating features from targets\n".upper())
+        print_header("Separating features from targets")
         print("self.X_train/self.X_test, self.y_train/self.y_test")
         self.separate()
 
         # MAP VALUES (ORDINAL AND CATEGORICAL)
         # E.g. 0,1,2,9 -> 0,1,2,3; 1,2,9 -> 1,2,3, <50, 50, 60, 70, 80, 90, 100 -> 0, 5, 6, 7, 8, 9, 10, etc.
         # Mappings given in 'class_codes' dictionary from variables.py
-        print("\nMapping ordinal feature/target codes\n".upper())
+        print_header("Mapping ordinal feature/target codes")
         self.mappings()
 
         # IMPUTE MISSING VALUES (IF APPLICABLE): FIRST STEP
@@ -241,7 +246,7 @@ class model:
 
         # COMBINE MULTIPLE TARGETS INTO A SINGLE TUPLE (IF APPLICABLE)
         if len(self.data.targets) > 1:
-            print("\nCombining multiple targets into a single tuple".upper())
+            print_header("Combining multiple targets into a single tuple")
             self.target_tuple()
 
         # FURTHER PREPROCESSING
@@ -252,14 +257,18 @@ class model:
         self.pipe()
 
         # PERFORM GRID SEARCH (IF APPLICABLE)
+        #####################################
+        ########### GRID SEARCH #############
+        #####################################
+        
         if self.param_grid is not None and self.grid_search_scoring is not None:
             if self.folds is None:
                 # New attribute
                 self.cv = 5
             else:
                 self.cv = self.folds
-            print(
-                f"\nPerforming grid search with {self.cv}-fold cross-validation".upper()
+            print_header(
+                f"Performing grid search with {self.cv}-fold cross-validation"
             )
             # New attribute
             self.grid_search = GridSearchCV(
@@ -271,7 +280,7 @@ class model:
             )
             display(self.grid_search.fit(self.X_train, self.y_train))
             print(
-                "\nBest hyperparameters: self.grid_search.best_params_ = ",
+                "Best hyperparameters: self.grid_search.best_params_ = ",
                 self.grid_search.best_params_,
             )
             print(
@@ -280,6 +289,10 @@ class model:
             )
 
         elif self.grid_search_scoring is None:
+            #####################################
+            ######### NO GRID SEARCH ############
+            #####################################
+            
             # TRAIN/VAL SPLIT IF NO k-FOLD CROSS-VALIDATION
             self.v_not_cv: bool = False
             if self.folds is None:
@@ -309,13 +322,14 @@ class model:
                 suffix = ""
             # New attribute
             self.filepath = self.model_dir.joinpath(filename_stem + suffix + ".joblib")
-            print("\nSaving pipeline:".upper(), f"{self.filepath}")
+            print_header("Saving pipeline")
+            print(f"{self.filepath}")
             dump(self.pipeline, self.filepath)
 
             # EVALUATE THE MODEL
             # New attributes
             print(
-                "\nMetrics (including confusion matrices) contained in dictionary self.eval."
+                "\nMetrics (including confusion matrices) contained in dictionary self.eval"
             )
             self.eval = self.evaluate(self.preds) 
             self.triv_eval = self.evaluate(self.triv_preds) 
@@ -326,20 +340,33 @@ class model:
             self.triv_eval_df = evaluation_df(self.triv_eval) 
 
             # DISPLAY EVALUATION METRICS
-            print(
-                "\n"
-                + "=" * 32
-                + "\nEvaluation metrics for each fold".upper()
-                + "\n"
-                + "=" * 32
-            )
+            print_header("Evaluation metrics for each fold")
             display(self.eval_df)
 
             # DISPLAY CONFUSION MATRICES
+            if self.weights is None:
+                if self.data.targets[0] == "TNRY_SEV":
+                    self.weights = np.array([1,2,3])
+                elif self.data.targets[0] == "SEVERITY":
+                    self.weights = np.array([1,2,3,4])
+                elif self.data.targets == "VICTIMS":
+                    self.weights = np.array([1,2])
+                else:
+                    pass
+                
+            if self.beta is None:
+                self.beta = 2
+                
             if widgets is None:
-                display_confusion_matrices(self.eval) 
+                display_confusion_matrices(self.eval, 
+                                           confusion_matrix_with_weighted_fbeta, 
+                                           beta = self.beta, 
+                                           weights = self.weights)
             else:
-                confusion_matrix_widget(self.eval) 
+                confusion_matrix_widget(self.eval,
+                                        confusion_matrix_with_weighted_fbeta, 
+                                        beta = self.beta, 
+                                        weights = self.weights) 
 
             # MERGE AND DISPLAY FEATURE IMPORTANCES
             if self.feature_importances is not None:
@@ -347,7 +374,7 @@ class model:
     )
                 # New attribute
                 self.feature_importances_df = merge_feature_importances(self.feature_importances)
-                print("=" * 19 + "\nFeature importance\n".upper() + "=" * 19)
+                print_header("Feature importance")
                 if widgets is None:
                     display_sorted_dataframe(
                         self.feature_importances_df,
@@ -359,7 +386,9 @@ class model:
                 # Animate (or plot, if just one column in dataframe) feature importances
                 self.plot_feature_importance(animate=True)
 
+    ###############            
     ### METHODS ###
+    ###############
 
     def separate(self) -> None:
         # Create copies of self.df_train, self.df_test, but only include feature columns.
@@ -426,7 +455,7 @@ class model:
                 self.ordinal_target_mapping[target], inplace=True
             )
 
-        print("\nMapping categorical feature/target codes\n".upper())
+        print_header("Mapping categorical feature/target codes")
         for feature in self.data.categorical_features:
             print(f"{feature}: {self.categorical_feature_mapping[feature]}")
             self.X_train[feature].replace(
@@ -678,11 +707,8 @@ class model:
                 X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
                 X_val, y_val = X.iloc[val_idx], y.iloc[val_idx]
             else:
-                print(
-                    f"\nImputing missing values".upper()
-                    + "(separately for train/val sets):"
-                )
-                print(f"\n{self.impute_strategy}")
+                print_header("Imputing missing values (separately for train/val sets)")                    
+                print(f"{self.impute_strategy}")
                 X_train, y_train = self.impute(X.iloc[train_idx], y.iloc[train_idx])
                 X_val, y_val = self.impute(X.iloc[val_idx], y.iloc[val_idx])
 
@@ -700,7 +726,7 @@ class model:
                     display(self.pipeline.fit(X_train, np.ravel(y_train)))
 
             # Make inferences/predictions
-            print(f"\nMaking predictions on validation set".upper())
+            print("Making predictions on validation set".upper())
             y_val_pred = self.pipeline.predict(X_val)
             y_val_prob = self.pipeline.predict_proba(X_val)
 
@@ -742,9 +768,7 @@ class model:
             )
 
         else:  # Cross-validation
-            print(
-                f"\nFitting data in {self.folds}-fold cross-validation process".upper()
-            )
+            print_header(f"Fitting data in {self.folds}-fold cross-validation process")
             if self.impute_strategy is not None:
                 print(
                     "\nSeparate imputation for each fold (inside cross-validation loop):"
@@ -857,19 +881,19 @@ class model:
             data["BACC"].append(balanced_acc)
 
             precision = precision_score(
-                target, prediction, average="micro", zero_division=np.nan
+                target, prediction, average="macro", zero_division=np.nan
             )
             data["precision"].append(precision)
 
             recall = recall_score(
-                target, prediction, average="micro", zero_division=np.nan
+                target, prediction, average="macro", zero_division=np.nan
             )
             data["recall"].append(recall)
 
-            f1 = f1_score(target, prediction, average="micro")
+            f1 = f1_score(target, prediction, average="macro")
             data["F1"].append(f1)
 
-            f2 = fbeta_score(target, prediction, beta=2, average="micro")
+            f2 = fbeta_score(target, prediction, beta=2, average="macro")
             data["F2"].append(f2)
 
             mcc = matthews_corrcoef(target, prediction)
@@ -891,17 +915,9 @@ class model:
                     roc_auc = np.nan
             data["ROC-AUC"].append(roc_auc)
 
-            confusion = custom_confusion(target, prediction)
-            data["confusion"].append(
-                {
-                    "label_given_prediction": confusion[
-                        "label_given_prediction_merged"
-                    ],
-                    "prediction_given_label": confusion[
-                        "prediction_given_label_merged"
-                    ],
-                }
-            )
+            confusion = pd.crosstab(target, prediction, margins=True).to_dict()
+            data["confusion"].append(confusion)
+
         return data
 
     def feature_importance(self) -> dict:
@@ -958,7 +974,7 @@ class model:
         }
         return combined_feature_importances, feature_importances_dict
 
-    def plot_feature_importance(self, animate: bool = False, fold: int = None) -> None:
+    def plot_feature_importance(self, animate: bool = False, fold: int = None) -> FuncAnimation:
         if (
             not isinstance(self.feature_importances_df, pd.DataFrame)
             or self.feature_importances_df.empty
@@ -1041,6 +1057,7 @@ class model:
 
             # Display the animation in the notebook using HTML
             display(HTML(anim.to_jshtml()))
+            return anim
 
 def evaluation_df(data: dict) -> pd.DataFrame:
     data_copy = data.copy()
@@ -1050,95 +1067,167 @@ def evaluation_df(data: dict) -> pd.DataFrame:
         eval_df.loc["mean"] = eval_df.mean()
     return eval_df
 
-def display_confusion_matrices(which_model: dict) -> None:
+def display_confusion_matrices(which_model: dict,
+                               func: Callable[[pd.DataFrame,
+                                               Union[float, None],
+                                               Union[np.ndarray, None]], float] = None,
+                              beta: Union[float, None] = None,
+                              weights: Union[np.ndarray, None] = None) -> None:
+
     if which_model["confusion"] is None:
         return
-    dataframes_lgp = {
-        i: d["label_given_prediction"]
-        for i, d in enumerate(which_model["confusion"])
-    }
-
-    dataframes_pgl = {
-        i: d["prediction_given_label"]
-        for i, d in enumerate(which_model["confusion"])
-    }
-
-    print(
-        "\n" + "=" * 41 + "\nProb(label | prediction = column heading)\n" + "=" * 41
-    )
-    for i in dataframes_lgp.keys():
-        display(i, dataframes_lgp[i])
-
-    print("\n" + "=" * 35 + "\nProb(prediction | label = row name)\n" + "=" * 35)
-    for i in dataframes_pgl.keys():
-        display(i, dataframes_pgl[i])
-
-def confusion_matrix_widget(which_model: dict) -> None:
+   
+    if func is None:
+        for i, d in enumerate(which_model["confusion"]):
+            if type(d) == dict:
+                d_df = pd.DataFrame(d)
+                display(i, d_df)
+        
+    else:
+        for i, d in enumerate(which_model["confusion"]):
+            if beta is None:
+                beta = 2
+            if weights is None:
+                weights = np.ones(pd.DataFrame(d).shape)
+                
+            d_augmented = func(d, beta = beta, weights = weights)
+            display(i, d_augmented.fillna('_'))
+        
+def confusion_matrix_widget(which_model: dict,
+                               func: Callable[[pd.DataFrame,
+                                               Union[float, None],
+                                               Union[np.ndarray, None]], float] = None,
+                              beta: Union[float, None] = None,
+                              weights: Union[np.ndarray, None] = None) -> None:
     if which_model["confusion"] is None:
         return
-    dataframes_lgp = {
-        i: d["label_given_prediction"]
-        for i, d in enumerate(which_model["confusion"])
-    }
+    
+    if func is None:
+        dataframes = {
+            i: pd.DataFrame(d)
+            for i, d in enumerate(which_model["confusion"])
+        }
+        to_print = "Confusion matrix"
+                
+    else:
+        dataframes = {
+            i: func(d, beta = beta, weights = weights).fillna('_')
+            for i, d in enumerate(which_model["confusion"])
+        }
+        print_weights = {i: w for i, w in enumerate(weights)}
+        to_print = f"Confusion matrix: weighted ({print_weights}) average class-wise F{beta} score at bottom right"
 
     # Dropdown widget to select DataFrame
-    dropdown_lgp = widgets.Dropdown(options=list(dataframes_lgp.keys()))
+    dropdown = widgets.Dropdown(options=list(dataframes.keys()))
 
     # Output widget to display the selected DataFrame
-    output_lgp = widgets.Output()
+    output = widgets.Output()
 
     # Function to update displayed DataFrame based on dropdown value
-    def update_dataframe_lgp(change):
-        output_lgp.clear_output()  # Clear the output before displaying the selected DataFrame
-        selected_df = dataframes_lgp[change.new]
-        with output_lgp:
+    def update_dataframe(change):
+        output.clear_output()  # Clear the output before displaying the selected DataFrame
+        selected_df = dataframes[change.new]
+        with output:
             display(selected_df)
 
     # Register the function to update the displayed DataFrame when dropdown value changes
-    dropdown_lgp.observe(update_dataframe_lgp, names="value")
+    dropdown.observe(update_dataframe, names="value")
 
     # Initial display of the first DataFrame
-    initial_df_lgp = dataframes_lgp[dropdown_lgp.value]
-    with output_lgp:
-        display(initial_df_lgp)
+    initial_df = dataframes[dropdown.value]
+    with output:
+        display(initial_df)
 
     # Display the dropdown widget and output widget
-    print(
-        "\n" + "=" * 41 + "\nProb(label | prediction = column heading)\n" + "=" * 41
-    )
-    display(dropdown_lgp)
-    display(output_lgp)
+    print_header(to_print)
+    display(dropdown)
+    display(output)
 
-    dataframes_pgl = {
-        i: d["prediction_given_label"]
-        for i, d in enumerate(which_model["confusion"])
-    }
+# def display_confusion_matrices(which_model: dict) -> None:
+#     if which_model["confusion"] is None:
+#         return
+#     dataframes_lgp = {
+#         i: d["label_given_prediction"]
+#         for i, d in enumerate(which_model["confusion"])
+#     }
 
-    # Dropdown widget to select DataFrame
-    dropdown_pgl = widgets.Dropdown(options=list(dataframes_pgl.keys()))
+#     dataframes_pgl = {
+#         i: d["prediction_given_label"]
+#         for i, d in enumerate(which_model["confusion"])
+#     }
 
-    # Output widget to display the selected DataFrame
-    output_pgl = widgets.Output()
+#     print_header("Prob(label | prediction = column heading)")
+#     for i in dataframes_lgp.keys():
+#         display(i, dataframes_lgp[i])
 
-    # Function to update displayed DataFrame based on dropdown value
-    def update_dataframe_pgl(change):
-        output_pgl.clear_output()  # Clear the output before displaying the selected DataFrame
-        selected_df = dataframes_pgl[change.new]
-        with output_pgl:
-            display(selected_df)
+#     print_header("Prob(prediction | label = row name)")
+#     for i in dataframes_pgl.keys():
+#         display(i, dataframes_pgl[i])
 
-    # Register the function to update the displayed DataFrame when dropdown value changes
-    dropdown_pgl.observe(update_dataframe_pgl, names="value")
+# def confusion_matrix_widget(which_model: dict) -> None:
+#     if which_model["confusion"] is None:
+#         return
+#     dataframes_lgp = {
+#         i: d["label_given_prediction"]
+#         for i, d in enumerate(which_model["confusion"])
+#     }
 
-    # Initial display of the first DataFrame
-    initial_df_pgl = dataframes_pgl[dropdown_pgl.value]
-    with output_pgl:
-        display(initial_df_pgl)
+#     # Dropdown widget to select DataFrame
+#     dropdown_lgp = widgets.Dropdown(options=list(dataframes_lgp.keys()))
 
-    # Display the dropdown widget and output widget
-    print("\n" + "=" * 35 + "\nProb(prediction | label = row name)\n" + "=" * 35)
-    display(dropdown_pgl)
-    display(output_pgl)
+#     # Output widget to display the selected DataFrame
+#     output_lgp = widgets.Output()
+
+#     # Function to update displayed DataFrame based on dropdown value
+#     def update_dataframe_lgp(change):
+#         output_lgp.clear_output()  # Clear the output before displaying the selected DataFrame
+#         selected_df = dataframes_lgp[change.new]
+#         with output_lgp:
+#             display(selected_df)
+
+#     # Register the function to update the displayed DataFrame when dropdown value changes
+#     dropdown_lgp.observe(update_dataframe_lgp, names="value")
+
+#     # Initial display of the first DataFrame
+#     initial_df_lgp = dataframes_lgp[dropdown_lgp.value]
+#     with output_lgp:
+#         display(initial_df_lgp)
+
+#     # Display the dropdown widget and output widget
+#     print_header("Prob(label | prediction = column heading)")
+#     display(dropdown_lgp)
+#     display(output_lgp)
+
+#     dataframes_pgl = {
+#         i: d["prediction_given_label"]
+#         for i, d in enumerate(which_model["confusion"])
+#     }
+
+#     # Dropdown widget to select DataFrame
+#     dropdown_pgl = widgets.Dropdown(options=list(dataframes_pgl.keys()))
+
+#     # Output widget to display the selected DataFrame
+#     output_pgl = widgets.Output()
+
+#     # Function to update displayed DataFrame based on dropdown value
+#     def update_dataframe_pgl(change):
+#         output_pgl.clear_output()  # Clear the output before displaying the selected DataFrame
+#         selected_df = dataframes_pgl[change.new]
+#         with output_pgl:
+#             display(selected_df)
+
+#     # Register the function to update the displayed DataFrame when dropdown value changes
+#     dropdown_pgl.observe(update_dataframe_pgl, names="value")
+
+#     # Initial display of the first DataFrame
+#     initial_df_pgl = dataframes_pgl[dropdown_pgl.value]
+#     with output_pgl:
+#         display(initial_df_pgl)
+
+#     # Display the dropdown widget and output widget
+#     print_header("Prob(prediction | label = row name)")
+#     display(dropdown_pgl)
+#     display(output_pgl)
     
 def merge_feature_importances(fi: dict = None) -> pd.DataFrame:
     dfs = [
@@ -1209,13 +1298,7 @@ def custom_xgb_grid_search(data: Type[process] = None,
     output = {}
     output['evaluation'] = copy.deepcopy(instance.eval)
     output['feature_importance'] = instance.feature_importances
-    for cm in output['evaluation']["confusion"]:
-        cm['label_given_prediction'] = cm['label_given_prediction'].to_dict(orient='list') 
-        # orient='index' is the wrong orientation; 
-        # orient='series' will cause errors to be thrown when we do json.dump... something about series not being serializable.
-        # just .to_dict() also will not work...
-        cm['prediction_given_label'] = cm['prediction_given_label'].to_dict(orient='list')
-
+        
     return output   
 
 # Save the grid search results to a text file
@@ -1228,7 +1311,7 @@ def save_gs_items(model_dir: Path, filename: str, gs_dict: dict) -> None:
         filename = filename[:filename.rindex('.')]    
     filename = filename + ".txt"
     file_path = model_dir.joinpath(filename)
-    
+   
     with open(file_path, "a", encoding="utf-8") as file:
         for key, value in gs_dict.items():
             json.dump({key: value}, file, ensure_ascii=False)
@@ -1236,7 +1319,13 @@ def save_gs_items(model_dir: Path, filename: str, gs_dict: dict) -> None:
 
 # And recover the dictionary from a text file...
 
-def load_gs_items(model_dir: Path, filename: str) -> dict:   
+def convert_keys_to_int(d):
+    if isinstance(d, dict):
+        return {int(k) if k.isdigit() else k: convert_keys_to_int(v) for k, v in d.items()}
+    else:
+        return d
+    
+def load_gs_items(model_dir: Path, filename: str) -> dict:
     if '.' in filename:
         filename = filename[:filename.rindex('.')]    
     filename = filename + ".txt"    
@@ -1248,8 +1337,12 @@ def load_gs_items(model_dir: Path, filename: str) -> dict:
         with open(file_path, "r", encoding="utf-8") as file:
             for line in file:
                 data = json.loads(line)
-                key = list(data.keys())[0]
-                value = data[key]
-                gs_dict[key] = value
+                key = list(data.keys())[0]  # Extract the key from the loaded JSON object
+                value = data[key]  # Extract the corresponding value
+                gs_dict[key] = value  # Add the key-value pair to the dictionary
     
-    return gs_dict            
+    for paramater_string in gs_dict.keys():
+        for i, d in enumerate(gs_dict[paramater_string]["evaluation"]["confusion"]):
+            gs_dict[paramater_string]["evaluation"]["confusion"][i] = convert_keys_to_int(d)
+        gs_dict[paramater_string]["feature_importance"] = {int(k) : v for k, v in gs_dict[paramater_string]["feature_importance"].items()}           
+    return gs_dict        

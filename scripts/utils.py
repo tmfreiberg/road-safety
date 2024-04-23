@@ -103,3 +103,9 @@ def save_df(df: pd.DataFrame, save_as: Union[str, Path], tack_on: Union[str, Non
             file.write(str(df_dict))
     else:
         print(f"Unsupported file extension: {file_extension}. Please use csv, xlsx, html, or json.")
+        
+def print_header(header: str) -> None:
+    length = len(header)
+    output_sequence = ["", "="*length, header.upper(), "="*length, ""]
+    output = '\n'.join(output_sequence)
+    print(output)        

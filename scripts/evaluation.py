@@ -1,8 +1,89 @@
 import pandas as pd
 import numpy as np
-from typing import Tuple
+from typing import Union, Tuple
+import copy
 
-   
+def weighted_average_f(beta: Union[float, None], 
+                       weights: Union[np.ndarray, None], 
+                       precision: Union[np.ndarray, pd.DataFrame], 
+                       recall: Union[np.ndarray,pd.DataFrame]) -> float:
+    
+    assert np.ravel(precision).shape == np.ravel(recall).shape, 'precision and recall arrays must be of the same length'
+    
+    if precision.all() == 0 or recall.all() == 0:
+        return np.nan
+    
+    if beta is None:
+        beta = 1
+    
+    if weights is None:
+        weights = np.ones(np.ravel(precision).shape)
+        
+    assert np.ravel(precision).shape == np.ravel(weights).shape, 'weights must have the same length as precision and recall'
+    if weights.all() == 0:
+        return np.nan
+    
+    fbeta = (1 + beta**2)/(1/precision + beta**2/recall)
+    
+    weighted_average_fbeta = np.sum(weights*fbeta)/np.sum(weights)
+    
+    return weighted_average_fbeta
+
+def confusion_matrix_with_weighted_fbeta(AxB: Union[pd.DataFrame,dict],
+                                        beta: Union[float, None] = None,
+                                        weights: Union[np.ndarray, None] = None,
+                                        percentage: bool = False,) -> pd.DataFrame:
+    
+    # Make a copy of AxB so that this process does not alter it.
+    df = copy.deepcopy(AxB)
+    
+    if type(df) == dict:
+        df = pd.DataFrame(df)
+    
+    # AxB is supposed to be the result of pd.crosstab(A, B, margins=True).
+    # Let's check to see whether both margins are included.
+    # If not, add them.
+    # Could be some corner cases when the last column of AxB sans maring just so happens to be the sum of the previous columns.
+    # We won't worry about that at this stage.
+
+    is_last_column_sum = df.iloc[:, :-1].sum(axis=1).equals(df.iloc[:, -1])
+    if not is_last_column_sum:
+        df['All'] = df.sum(axis=1)
+
+    is_last_row_sum = df.iloc[:-1, :].sum(axis=0).equals(df.iloc[-1, :])
+    if not is_last_row_sum:
+        df.loc['All'] = df.sum(axis=0)    
+
+    diagonal_entries = np.diag(df.values)
+    # Add a recall column 
+    last_col_name = df.columns[-1]
+    df['recall'] = diagonal_entries/df[last_col_name]
+
+    # And a precision row
+    diagonal_entries = np.append(diagonal_entries, [0])
+    df.loc['precision'] = diagonal_entries/df.iloc[-1]
+
+    # Extract the recall and precision arrays
+    recall = df['recall'][:-2]
+    precision = df.loc['precision'][:-2] 
+
+    # Calculate the weighted average fbeta score and put it in the bottom right corner of df
+    try:
+        df.iloc[-1, -1] = weighted_average_f(beta, weights, precision, recall)
+    except Exception as e:
+        print(f"Error calculating weighted average fbeta score: {e}")
+
+    # df should have originally been all integers, but now we have floats, so let's format the original part
+    df.iloc[:-1,:-1,] = df.iloc[:-1,:-1,].applymap(lambda x : f"{int(x):,}")
+
+    # Insert blanks where we have no meaningful values
+    df.iloc[-1, -2] = np.nan
+    df.iloc[-2, -1] = np.nan
+
+    # Label the index and the columns
+    df = df.rename_axis(index='actual', columns='predicted')
+    
+    return df
 
 def custom_confusion(
     labels: pd.Series,
