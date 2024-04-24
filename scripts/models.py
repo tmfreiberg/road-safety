@@ -333,11 +333,13 @@ class model:
             )
             self.eval = self.evaluate(self.preds) 
             self.triv_eval = self.evaluate(self.triv_preds) 
+            self.triv_min_eval = self.evaluate(self.triv_preds_min)
             print(
                 "Metrics (excluding confusion matrices) also contained in dataframe self.eval_df"
             )
             self.eval_df = evaluation_df(self.eval) 
             self.triv_eval_df = evaluation_df(self.triv_eval) 
+            self.triv_min_eval_df = evaluation_df(self.triv_min_eval) 
 
             # DISPLAY EVALUATION METRICS
             print_header("Evaluation metrics for each fold")
@@ -691,7 +693,9 @@ class model:
     def fit(self, X: pd.DataFrame, y: pd.DataFrame) -> None:
         # New attribute: dictionary to store ground truth labels, predictions, and probabilities.
         self.preds = {}
+        # ... and trivial predictions...
         self.triv_preds = {}
+        self.triv_preds_min = {}
         # New attributes: dictionaries to store feature importances
         self.feature_importances = {}
         self.feature_importances_ohe = {}
@@ -712,7 +716,7 @@ class model:
                 X_train, y_train = self.impute(X.iloc[train_idx], y.iloc[train_idx])
                 X_val, y_val = self.impute(X.iloc[val_idx], y.iloc[val_idx])
 
-                # Balance the training set (if applicable), and fit the model !!!
+                # Balance the training set (if applicable), and fit the model 
                 if self.balance is not None:
                     print("\nBalancing".upper(), end=" ")
                     X_balanced, y_balanced = balance(
@@ -738,10 +742,15 @@ class model:
                 "prediction": y_val_pred,
                 "probabilities": y_val_prob,
             }
+            # trivial predictions...
             self.triv_preds[0] = dict.fromkeys(
                 ["target", "prediction", "probabilities"]
             )
+            self.triv_preds_min[0] = dict.fromkeys(
+                ["target", "prediction", "probabilities"]
+            )
             self.triv_preds[0]["target"] = y_val.values.reshape(-1)
+            self.triv_preds_min[0]["target"] = y_val.values.reshape(-1)
             tgt = y_train.columns[0]
             cc = self.class_codes[tgt]
             _, self.triv_preds[0]["prediction"], self.triv_preds[0]["probabilities"] = (
@@ -752,9 +761,18 @@ class model:
                     pos_label="majority_class",
                     num_preds=y_val.shape[0],
                 )
-            )
+            )    
+            _, self.triv_preds_min[0]["prediction"], self.triv_preds_min[0]["probabilities"] = (
+                trivial(
+                    y_train,
+                    class_codes=cc,
+                    class_probs="zero_one",
+                    pos_label="minority_class",
+                    num_preds=y_val.shape[0],
+                )
+            )             
 
-            # Get feature imortances, too
+            # Get feature importances, too
             self.feature_importances[0], self.feature_importances_ohe[0] = (
                 self.feature_importance()
             )
@@ -787,7 +805,7 @@ class model:
                     X_train, y_train = self.impute(X.iloc[train_idx], y.iloc[train_idx])
                     X_val, y_val = self.impute(X.iloc[val_idx], y.iloc[val_idx])
 
-                # Balance the training set (if applicable), and fit the model !!!
+                # Balance the training set (if applicable), and fit the model 
                 if self.balance is not None:
                     print("Balancing".upper(), end=" ")
                     X_balanced, y_balanced = balance(
@@ -819,10 +837,15 @@ class model:
                     "prediction": y_val_pred,
                     "probabilities": y_val_prob,
                 }
+                # Trivial predictions...
                 self.triv_preds[i] = dict.fromkeys(
                     ["target", "prediction", "probabilities"]
                 )
+                self.triv_preds_min[i] = dict.fromkeys(
+                    ["target", "prediction", "probabilities"]
+                )                
                 self.triv_preds[i]["target"] = y_val.values.reshape(-1)
+                self.triv_preds_min[i]["target"] = y_val.values.reshape(-1)
                 tgt = y_train.columns[0]
                 cc = self.class_codes[tgt]
                 (
@@ -836,6 +859,17 @@ class model:
                     pos_label="majority_class",
                     num_preds=y_val.shape[0],
                 )
+                (
+                    _,
+                    self.triv_preds_min[i]["prediction"],
+                    self.triv_preds_min[i]["probabilities"],
+                ) = trivial(
+                    y_train,
+                    class_codes=cc,
+                    class_probs="zero_one",
+                    pos_label="minority_class",
+                    num_preds=y_val.shape[0],
+                )                
 
                 # Get feature imortances, too
                 self.feature_importances[i], self.feature_importances_ohe[i] = (
