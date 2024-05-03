@@ -16,8 +16,7 @@ We employ the XGBoostClassifier to create a ternary classification model. This m
 
 The trained classification model is deployed using a Streamlit app. This app serves as a valuable tool for various stakeholders, including:
 
-- **911 Dispatchers**: Enhancing emergency response based on predicted accident severity.
-- **Municipal Authorities and Town Planners**: Informing urban planning and infrastructure decisions.
+- **Municipal Authorities and Town Planners**: Informing urban planning/infrastructure decisions, as well as traffic control logistics.
 - **Vision Zero Campaigners**: Supporting initiatives aimed at reducing traffic accidents and fatalities.
 
 ## How to Use
