@@ -43,7 +43,7 @@ def confusion_matrix_with_weighted_fbeta(AxB: Union[pd.DataFrame,dict],
     # AxB is supposed to be the result of pd.crosstab(A, B, margins=True).
     # Let's check to see whether both margins are included.
     # If not, add them.
-    # Could be some corner cases when the last column of AxB sans maring just so happens to be the sum of the previous columns.
+    # Could be some corner cases when the last column of AxB sans margin just so happens to be the sum of the previous columns.
     # We won't worry about that at this stage.
 
     is_last_column_sum = df.iloc[:, :-1].sum(axis=1).equals(df.iloc[:, -1])

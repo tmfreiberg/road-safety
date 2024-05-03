@@ -176,8 +176,8 @@ class process:
     def __init__(
         self,
         source: Type[primary],
-        restrict_to: Union[list, None],
-        remove_if: Union[list, None],
+        restrict_to: Union[dict, None],
+        remove_if: Union[dict, None],
         drop_row_if_missing_value_in: Union[list, None],
         targets: list,
         features: list,
