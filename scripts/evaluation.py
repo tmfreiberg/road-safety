@@ -40,6 +40,8 @@ def confusion_matrix_with_weighted_fbeta(AxB: Union[pd.DataFrame,dict],
     if type(df) == dict:
         df = pd.DataFrame(df)
     
+    df = df.astype(object)
+    
     # AxB is supposed to be the result of pd.crosstab(A, B, margins=True).
     # Let's check to see whether both margins are included.
     # If not, add them.
@@ -75,6 +77,12 @@ def confusion_matrix_with_weighted_fbeta(AxB: Union[pd.DataFrame,dict],
 
     # df should have originally been all integers, but now we have floats, so let's format the original part
     df.iloc[:-1,:-1,] = df.iloc[:-1,:-1,].map(lambda x : f"{int(x):,}") # applymap
+    '''
+    Throws: 'FutureWarning: Setting an item of incompatible dtype is deprecated and will raise an error in a future version of pandas. 
+    Value '['44,163' '6,961' '165' '51,289']' has dtype incompatible with float64, please explicitly cast to a compatible dtype first.'
+    Is this a bug? See https://github.com/pandas-dev/pandas/issues/55025
+    Workaround: added df = df.astype(object) above to avoid the warning. 
+    '''
 
     # Insert blanks where we have no meaningful values
     df.iloc[-1, -2] = np.nan
