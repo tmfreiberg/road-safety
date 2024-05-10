@@ -441,39 +441,39 @@ class model:
         # Apply the mappings
         for feature in self.data.ordinal_features:
             print(f"{feature}: {self.ordinal_feature_mapping[feature]}")
-            self.X_train[feature].replace(
-                self.ordinal_feature_mapping[feature], inplace=True
+            self.X_train[feature] = self.X_train[feature].map(
+                self.ordinal_feature_mapping[feature]
             )
-            self.X_test[feature].replace(
-                self.ordinal_feature_mapping[feature], inplace=True
+            self.X_test[feature] = self.X_test[feature].map(
+                self.ordinal_feature_mapping[feature]
             )
 
         for target in self.data.ordinal_targets:
             print(f"{target}: {self.ordinal_target_mapping[target]}")
-            self.y_train[target].replace(
-                self.ordinal_target_mapping[target], inplace=True
-            )
-            self.y_test[target].replace(
-                self.ordinal_target_mapping[target], inplace=True
-            )
+            self.y_train[target] = self.y_train[target].map(
+                self.ordinal_target_mapping[target]
+            ) 
+            self.y_test[target] = self.y_test[target].map(
+                self.ordinal_target_mapping[target]
+            ) 
 
         print_header("Mapping categorical feature/target codes")
         for feature in self.data.categorical_features:
             print(f"{feature}: {self.categorical_feature_mapping[feature]}")
-            self.X_train[feature].replace(
-                self.categorical_feature_mapping[feature], inplace=True
-            )
-            self.X_test[feature].replace(
-                self.categorical_feature_mapping[feature], inplace=True
-            )
+            self.X_train[feature] = self.X_train[feature].map(
+                self.categorical_feature_mapping[feature]
+            ) 
+            self.X_test[feature] = self.X_test[feature].map(
+                self.categorical_feature_mapping[feature]
+            ) 
 
         for target in self.data.categorical_targets:
             print(f"{target}: {self.categorical_target_mapping[target]}")
-            self.y_train[target].replace(
-                self.categorical_target_mapping[target], inplace=True
+            self.y_train[target] = self.y_train[target].map(
+                self.categorical_target_mapping[target]
             )
-            self.y_test[target].replace(
-                self.categorical_target_mapping[target], inplace=True
+            self.y_test[target] = self.y_test[target].map(
+                self.categorical_target_mapping[target]
             )
 
     def impute_first_step(self) -> None:

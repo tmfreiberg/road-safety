@@ -74,7 +74,7 @@ def confusion_matrix_with_weighted_fbeta(AxB: Union[pd.DataFrame,dict],
         print(f"Error calculating weighted average fbeta score: {e}")
 
     # df should have originally been all integers, but now we have floats, so let's format the original part
-    df.iloc[:-1,:-1,] = df.iloc[:-1,:-1,].applymap(lambda x : f"{int(x):,}")
+    df.iloc[:-1,:-1,] = df.iloc[:-1,:-1,].map(lambda x : f"{int(x):,}") # applymap
 
     # Insert blanks where we have no meaningful values
     df.iloc[-1, -2] = np.nan
@@ -191,9 +191,9 @@ def custom_confusion(
         return f"{a} (↓{b}%)"
 
     label_given_prediction_formatted_df = (
-        filtered_label_given_prediction_combined_df.applymap(
+        filtered_label_given_prediction_combined_df.map(
             lambda x: format_label_given_prediction(*x) if isinstance(x, tuple) else x
-        )
+        ) # applymap
     )
     label_given_prediction_formatted_df.columns.name = "prediction"
     label_given_prediction_formatted_df.index.name = "actual"
@@ -202,9 +202,9 @@ def custom_confusion(
         return f"{a} (→{b}%)"
 
     prediction_given_label_formatted_df = (
-        filtered_prediction_given_label_combined_df.applymap(
+        filtered_prediction_given_label_combined_df.map(
             lambda x: format_prediction_given_label(*x) if isinstance(x, tuple) else x
-        )
+        ) # applymap
     )
     
     prediction_given_label_formatted_df.columns.name = "prediction"
