@@ -242,14 +242,14 @@ def custom_crosstab(
     def format_tuple(a, b):
         return f"{a} (↓{b}%)"
 
-    formatted_df = filtered_combined_df.applymap(
+    formatted_df = filtered_combined_df.map(
         lambda x: format_tuple(*x) if isinstance(x, tuple) else x
     )
 
     def format_tuple_rows(a, b):
         return f"{a} (→{b}%)"
 
-    formatted_df_rows = filtered_combined_df_rows.applymap(
+    formatted_df_rows = filtered_combined_df_rows.map(
         lambda x: format_tuple_rows(*x) if isinstance(x, tuple) else x
     )
 

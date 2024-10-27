@@ -11,12 +11,12 @@ from sklearn.model_selection import train_test_split
 
 class primary:
     def __init__(
-        self,
-        data_dir: Path,
-        years: list,
-        filename_format: str,
-        Print: bool,
-        sentinel: Union[int, float, str, None] = None,
+            self,
+            data_dir: Path,
+            years: list,
+            filename_format: str,
+            Print: bool,
+            sentinel: Union[int, float, str, None] = None,
     ) -> None:
 
         self.data_dir = data_dir
@@ -75,10 +75,10 @@ def extract_dataset(filename_format):
 
 
 def load_data(
-    data_dir: Path,
-    years: list,
-    filename_format,
-    sentinel: Union[int, float, str, None],
+        data_dir: Path,
+        years: list,
+        filename_format,
+        sentinel: Union[int, float, str, None],
 ) -> pd.DataFrame:
     # Initialize empty dataframe
     df = pd.DataFrame()
@@ -149,7 +149,7 @@ def synopsis(df: pd.DataFrame) -> None:
 def convert_to_numeric_if_needed(df: pd.DataFrame) -> None:
     for column in df.columns:
         if not pd.api.types.is_integer_dtype(
-            df[column]
+                df[column]
         ) and not pd.api.types.is_float_dtype(df[column]):
             df[column] = df[column].apply(convert_to_number)
 
@@ -174,17 +174,17 @@ def convert_to_number(value):
 
 class process:
     def __init__(
-        self,
-        source: Type[primary],
-        restrict_to: Union[dict, None],
-        remove_if: Union[dict, None],
-        drop_row_if_missing_value_in: Union[list, None],
-        targets: list,
-        features: list,
-        test_size: float,
-        seed: int,
-        stratify: bool,
-        stratify_by: list,
+            self,
+            source: Type[primary],
+            restrict_to: Union[dict, None],
+            remove_if: Union[dict, None],
+            drop_row_if_missing_value_in: Union[list, None],
+            targets: list,
+            features: list,
+            test_size: Union[float, None],
+            seed: Union[int, None],
+            stratify: Union[bool, None],
+            stratify_by: Union[list, None],
     ) -> None:
 
         self.source = source
@@ -220,9 +220,9 @@ class process:
 
         # Add new target columns (if applicable)
         if bool(
-            set(["MULT_VEH", "VICTIMS", "TNRY_SEV"]).intersection(
-                set(self.targets).union(set(self.features))
-            )
+                set(["MULT_VEH", "VICTIMS", "TNRY_SEV"]).intersection(
+                    set(self.targets).union(set(self.features))
+                )
         ):
             self.add_columns()
 
@@ -255,8 +255,9 @@ class process:
         self.ordinal_targets = list(set(ordinal_cols).intersection(set(self.targets)))
         self.ordinal_features = list(set(ordinal_cols).intersection(set(self.features)))
 
-        # Partition into train/test sets
-        self.split()
+        # Partition into train/test sets        
+        if self.test_size is not None:
+            self.split()
 
         print(f"\nself.ordinal_features = {self.ordinal_features}")
         print(f"\nself.ordinal_targets = {self.ordinal_targets}")
@@ -295,12 +296,12 @@ class process:
         # New attribute:
         if self.sentinel is None:
             print(
-                "\nDropping rows for which there is a missing value in a column from self.drop_row_if_missing_value_in."
+                f"\nDropping rows for which there is a missing value in a column from {self.drop_row_if_missing_value_in}."
             )
             self.df = self.df.dropna(subset=self.drop_row_if_missing_value_in).copy()
         else:
             print(
-                "\nDropping rows for which there is a sentinel value in a column from self.drop_row_if_missing_value_in."
+                f"\nDropping rows for which there is a sentinel value in a column from {self.drop_row_if_missing_value_in}."
             )
             self.df = self.df[
                 ~self.df[self.drop_row_if_missing_value_in].isin([self.sentinel]).copy()
@@ -366,9 +367,9 @@ class process:
             self.df.insert(severity_index + 1, "TNRY_SEV", self.df.pop("TNRY_SEV"))
 
         if (
-            "V_AGE" in self.features
-            and "C_YEAR" in self.df.columns
-            and "V_YEAR" in self.df.columns
+                "V_AGE" in self.features
+                and "C_YEAR" in self.df.columns
+                and "V_YEAR" in self.df.columns
         ):
             # Age of vehicle in years: C_YEAR - V_YEAR
             print("\nInserting 'V_AGE' column.")
@@ -387,7 +388,7 @@ class process:
                 non_null_values = self.df[self.df[col] != self.sentinel][col].nunique()
                 text_to_print = f"\nRemoving {col} from self.features (but not from self.df) as the number of distinct non-sentinel values in self.df['{col}'] is {non_null_values}."
             if (col == "RDWX" and non_null_values == 0) or (
-                col != "RDWX" and non_null_values < 2
+                    col != "RDWX" and non_null_values < 2
             ):
                 print(text_to_print)
                 self.features.remove(col)

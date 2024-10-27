@@ -1,12 +1,10 @@
-# Custom modules
 pandas
 numpy
-matplotlib
 scikit-learn
 xgboost
 joblib
-ipywidgets
-
-# Additional dependencies
-typing
+matplotlib
 pathlib
+streamlit
+ipywidgets
+notebook
