@@ -7,8 +7,13 @@
 
 # Ignore these folders:
 .idea/
-notebooks/.ipynb_checkpoints
-scripts/__pycache__/
+
+# Ignore all __pycache__ directories
+**/__pycache__/
+
+# Ignore all .ipynb_checkpoints directories
+**/.ipynb_checkpoints/
 
 # Also ignore:
 feedback.txt
+montreal-vision-zero.png
